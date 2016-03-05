@@ -1,9 +1,14 @@
-const transform = (str) => {
+import * as fs from 'fs'
+const transform = (str, options = {}) => {
   return require('babel-core').transform(str, {
-    plugins: ['./src']
+    plugins: [['./src', options]]
   }).code;
 };
-const code = 'var b = "aaaa";var c = 123; var a = edn`[:find ?a :where [?e "age" ?a]]`;';
 
-//const code = 'const example = "Hello";';
-console.log(transform(code));
+fs.readFile('./src/spec/test-cases/withOtherSymbol/input.js', 'utf8', (err, data) => {
+  if (err) {
+    return console.log(err);
+  }
+  console.log(data);
+  console.log(transform(data, {library: 'mori', tag: 'Ds'}));
+});
