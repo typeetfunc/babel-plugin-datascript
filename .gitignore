@@ -1,6 +1,6 @@
 logs
 *.log
 npm-debug.log*
-
+try
 node_modules
 lib
