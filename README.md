@@ -4,7 +4,7 @@ Plugin for precompile static DataScript query to Mori structs. In future will ad
 
 ## Example
 
-# Input:
+### Input:
 
 ```JavaScript
 var Datalog = Datalog.Q`[:find  ?e ?email
@@ -12,7 +12,7 @@ var Datalog = Datalog.Q`[:find  ?e ?email
                           :where [?e :name ?n]]`;
 ```
 
-# Output:
+### Output:
 
 ```JavaScript
 import { mori as _mori } from 'datascript-mori';
