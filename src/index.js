@@ -110,7 +110,7 @@ const visitorTagLiteral = {
   TaggedTemplateExpression(path) {
     const t = this.types
     let tag = path.get(`tag`)
-    let type // eslint-disable-line
+    let type // eslint-disable-line no-unused-vars
     if (tag.isMemberExpression()) {
       tag = tag.get(`object`)
       type = tag.get(`property`).name
