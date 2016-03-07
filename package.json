@@ -9,16 +9,20 @@
     "lint": "./node_modules/.bin/eslint src",
     "clean": "rm -rf lib",
     "build": "babel src -d lib",
-    "prepublish": "npm run build"
+    "prepublish": "npm run lint && npm run test && npm run clean && npm run build"
   },
   "bugs": {
-    "url": "https://github.com/typeetfunc/babel-plugin-datascript"
+    "url": "https://github.com/typeetfunc/babel-plugin-datascript/issues"
   },
   "repository": {
     "type": "git",
     "url": "http://github.com/typeetfunc/babel-plugin-datascript.git"
   },
-  "author": "Jon Sharratt",
+  "keywords": [
+    "datascript",
+    "mori"
+  ],
+  "author": "Andrei Melnikov <parabellum06-94@yandex.ru>",
   "dependencies": {
     "babel-core": "^6.2.1",
     "babel-preset-es2015": "^6.1.18",
