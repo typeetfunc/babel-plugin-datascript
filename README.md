@@ -30,11 +30,13 @@ var Datalog = _mori.vector(_mori.keyword('find'), _mori.symbol('?e'), _mori.symb
 Datalog query is a ClojureScript data structures, not a string. In JS API Datalog query is a string that [convert to CLJS data structures in runtime](https://github.com/tonsky/datascript/blob/master/src/datascript/js.cljs#L70)
 Babel-plugin transfers this convertaion in compile-time. Conversion in compile-time has two advantages:
  - check query during compilation. Example:
+ 
   ```JavaScript
-  var q1 = Datalog`[ :find (sum ?heads) (min ?heads) (max ?heads) (count ?heads) (count-distinct ?heads)
+  var q1 = Datalog`[ :find (sum ?heads)
                :with ?monster
                :in   [[?monster ?heads]]`;
   ```
+
   This code doesnt compile because in EDN string missing closing bracket `]`. Also soon I will add check query with [parse-query](https://github.com/tonsky/datascript/blob/master/src/datascript/parser.cljc#L732) and [parse-pull](https://github.com/tonsky/datascript/blob/master/src/datascript/pull_parser.cljc#L217) DataScript API.
  - minimize runtime overhead of parse string to EDN in runtime
  
