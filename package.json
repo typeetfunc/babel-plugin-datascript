@@ -1,6 +1,6 @@
 {
   "name": "babel-plugin-datascript",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Babel plugin for compile and check DataScript query",
   "homepage": "https://github.com/typeetfunc/babel-plugin-datascript",
   "main": "lib",
