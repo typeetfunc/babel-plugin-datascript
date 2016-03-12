@@ -1,4 +1,5 @@
 import {encodeJson, parse} from 'jsedn'
+import {helpers, mori} from 'datascript-mori'
 import typeOf from 'typeof'
 
 const MORI = `mori`
@@ -12,6 +13,11 @@ const KEY_VAL = `val`
 const DEFAULT_OPTIONS = {
   tag: `Datalog`,
   library: `datascript-mori`,
+}
+
+const PARSER = {
+  Q: `parse_query`,
+  Pull: `parse_pull`,
 }
 
 const mapping = {
@@ -97,6 +103,13 @@ function babelify(ast, t, moriUID) {
   throw new SyntaxError(makeMessage.ednError(ast))
 }
 
+function checkQuery(query, type) {
+  const parsed = mori.parse(query)
+  if (PARSER.hasOwnProperty(type)) {
+    helpers[PARSER[type]](parsed)
+  }
+}
+
 const statementVisitor = {
   Statement(path) {
     path.insertBefore(
@@ -109,12 +122,10 @@ const statementVisitor = {
 const visitorTagLiteral = {
   TaggedTemplateExpression(path) {
     const t = this.types
-    let tag = path.get(`tag`)
-    let type // eslint-disable-line no-unused-vars
-    if (tag.isMemberExpression()) {
-      tag = tag.get(`object`)
-      type = tag.get(`property`).name
-    }
+    const rawTag = path.get(`tag`)
+    const [tag, type] = rawTag.isMemberExpression() ?
+      [rawTag.get(`object`), rawTag.get(`property`).node.name] :
+      [rawTag]
 
     if (tag.isIdentifier({name: this.tag})) {
       if (!this.moriUID) {
@@ -133,6 +144,7 @@ const visitorTagLiteral = {
         let ast
 
         try {
+          checkQuery(value, type)
           const parsed = JSON.parse(encodeJson(parse(value)))
           ast = babelify(parsed, t, this.moriUID)
         } catch (e) {

@@ -60,11 +60,18 @@ describe(`Compile query with different options`, () => {
   });
 });
 
-describe(`Compile query with different options`, () => {
+describe(`Check bad query or EDN`, () => {
   describe(`Not correct EDN`, () => {
     it(`compile with throw Syntax Error`, () => {
       readCase(`badEdn`, (input) => {
         except(() => transform(input)).to.throw(SyntaxError, /> 2 | ar q1 = Datalog/);
+      }, {onlyInput: true});
+    });
+  });
+  describe(`Not correct Query`, () => {
+    it(`compile with throw Syntax Error`, () => {
+      readCase(`badQuery`, (input) => {
+        except(() => transform(input)).to.throw(SyntaxError, `#error {:message "Query for unknown vars: [?f]", :data {:error :parser/query, :vars #{#datascript.parser.Variable{:symbol ?f}}, :form [:find ?e :with ?f :where [?e]]}}`);
       }, {onlyInput: true});
     });
   });

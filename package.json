@@ -28,7 +28,8 @@
   "author": "Andrei Melnikov <parabellum06-94@yandex.ru>",
   "dependencies": {
     "jsedn": "https://github.com/typeetfunc/jsedn.git",
-    "typeof": "1.0.0"
+    "typeof": "1.0.0",
+    "datascript-mori": ">=0.15.8"
   },
   "devDependencies": {
     "babel-core": "^6.5.0",
