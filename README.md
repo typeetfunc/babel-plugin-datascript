@@ -43,6 +43,6 @@ Babel-plugin transfers this convertaion in compile-time. Conversion in compile-t
   ```JavaScript
   var q1 = Datalog.Q`[:find ?e :with ?f :where [?e]]`;;
   ```
-  This code doesnt compile because in query variable ?f is unknown.
+  This code doesnt compile because in query variable `?f` is unknown.
 
  - minimize runtime overhead of parse string to EDN in runtime
