@@ -1,6 +1,6 @@
-## Babel plugin DataScript
+## Babel plugin DataScript [![Build Status](https://travis-ci.org/typeetfunc/babel-plugin-datascript.svg?branch=master)](https://travis-ci.org/typeetfunc/babel-plugin-datascript)
 
-Plugin for precompile static DataScript query to Mori structs. In future will added check query in compile-time with Datascript parse-query API.
+Plugin for precompile static DataScript query to Mori structs. Also plugin checks query in compile-time with Datascript parse-query API.
 
 ## Example
 
