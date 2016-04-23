@@ -27,7 +27,7 @@ var Datalog = _mori.vector(_mori.keyword('find'), _mori.symbol('?e'), _mori.symb
 
 ### Why?
 
-Datalog query is a ClojureScript data structures, not a string. In JS API Datalog query is a string that [convert to CLJS data structures in runtime](https://github.com/tonsky/datascript/blob/master/src/datascript/js.cljs#L70)
+Datalog query is a ClojureScript data structures, not a string. In JS API Datalog query is a string which [convert to CLJS data structures in runtime](https://github.com/tonsky/datascript/blob/master/src/datascript/js.cljs#L70)
 Babel-plugin transfers this convertaion in compile-time. Conversion in compile-time has two advantages:
  - check query during compilation. Example:
 
