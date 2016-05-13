@@ -1,4 +1,4 @@
-import {expect} from 'chai'
+import {expect, assert} from 'chai'
 import * as fs from 'fs'
 
 const transform = (str, options = {}) => {
@@ -9,53 +9,51 @@ const transform = (str, options = {}) => {
 const TEST_CASE_PATH = `./test/test-cases/`
 const CODIR = `utf8`
 
-const readCase = (caseFolder, callback, options = {}) => {
-  fs.readFile(`${TEST_CASE_PATH}${caseFolder}/input.js`,
-      CODIR, (err, input) => {
-        if (err) {
-          return console.log(err)
-        }
-        if (options.onlyInput) {
-          callback(input)
-        } else {
-          fs.readFile(`${TEST_CASE_PATH}${caseFolder}/output.js`,
-            CODIR, (errOut, output) => {
-              if (errOut) {
-                return console.log(errOut)
-              }
-              callback(input, output)
-            })
-        }
-      })
+const dropLastBreak = str => str.replace(/\n$/, '')
+const readCase = (caseFolder, options = {}) => {
+  const input = dropLastBreak(fs.readFileSync(
+    `${TEST_CASE_PATH}${caseFolder}/input.js`,
+    CODIR
+  ))
+  if (options.onlyInput) {
+    return input
+  } else {
+    const output = dropLastBreak(fs.readFileSync(
+      `${TEST_CASE_PATH}${caseFolder}/output.js`,
+      CODIR
+    ))
+    return [input, output]
+  }
 }
+
 /* eslint-disable */
+
 describe(`Compile query with different options`, () => {
   describe(`With default options`, () => {
     it(`compile ok`, () => {
-      readCase(`staticWithDefaultOptions`, (input, output) => {
-        except(transform(input)).to.equal(output);
-      });
+      const [input, output] = readCase(`staticWithDefaultOptions`)
+      assert.equal(transform(input), output)
     });
   });
+
   describe(`With vanilla mori and template string`, () => {
     it(`compile ok`, () => {
-      readCase(`withVanillaMoriAndTemplate`, (input, output) => {
-        except(transform(input, {library: `mori`})).to.equal(output);
-      });
+      const [input, output] = readCase(`withVanillaMoriAndTemplate`)
+      assert.equal(transform(input, {library: `mori`}), output)
     });
   });
+
   describe(`With other tag and Pull query`, () => {
     it(`compile ok`, () => {
-      readCase(`withOtherSymbol`, (input, output) => {
-        except(transform(input, {library: `mori`, tag: `Ds`})).to.equal(output);
-      });
+      const [input, output] = readCase(`withOtherSymbol`)
+      assert.equal(transform(input, {library: `mori`, tag: `Ds`}), output)
     });
   });
+
   describe(`Some different edn`, () => {
     it(`compile ok`, () => {
-      readCase(`someEdnTest`, (input, output) => {
-        except(transform(input)).to.equal(output);
-      });
+      const [input, output] = readCase(`someEdnTest`)
+      assert.equal(transform(input), output)
     });
   });
 });
@@ -63,16 +61,21 @@ describe(`Compile query with different options`, () => {
 describe(`Check bad query or EDN`, () => {
   describe(`Not correct EDN`, () => {
     it(`compile with throw Syntax Error`, () => {
-      readCase(`badEdn`, (input) => {
-        except(() => transform(input)).to.throw(SyntaxError, /> 2 | ar q1 = Datalog/);
-      }, {onlyInput: true});
-    });
+      const input = readCase(`badEdn`, {onlyInput: true})
+      assert.throws(() => transform(input), SyntaxError, /EOF while reading/)
+    })
   });
   describe(`Not correct Query`, () => {
     it(`compile with throw Syntax Error`, () => {
-      readCase(`badQuery`, (input) => {
-        except(() => transform(input)).to.throw(SyntaxError, `#error {:message "Query for unknown vars: [?f]", :data {:error :parser/query, :vars #{#datascript.parser.Variable{:symbol ?f}}, :form [:find ?e :with ?f :where [?e]]}}`);
-      }, {onlyInput: true});
+      const input = readCase(`badQuery`, {onlyInput: true})
+      assert.throws(() => transform(input), SyntaxError, `#error {:message "Query for unknown vars: [?f]", :data {:error :parser/query, :vars #{#datascript.parser.Variable{:symbol ?f}}, :form [:find ?e :with ?f :where [?e]]}}`)
     });
+  });
+});
+
+describe(`With caching parse`, () => {
+  it(`Use memoized_parse instead parse`, () => {
+    const [input, output] = readCase(`withCache`)
+    assert.equal(transform(input, {cache: true}), output);
   });
 });

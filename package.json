@@ -5,7 +5,7 @@
   "homepage": "https://github.com/typeetfunc/babel-plugin-datascript",
   "main": "lib",
   "scripts": {
-    "test": "mocha --harmony --compilers js:babel-core/register test/*.spec.js",
+    "test": "mocha --compilers js:babel-core/register test/*.spec.js",
     "lint": "eslint src",
     "clean": "rm -rf lib",
     "build": "babel src -d lib",
@@ -29,7 +29,7 @@
   "dependencies": {
     "jsedn": "https://github.com/typeetfunc/jsedn.git",
     "typeof": "1.0.0",
-    "datascript-mori": ">=0.15.8"
+    "datascript-mori": "0.16"
   },
   "devDependencies": {
     "babel-core": "^6.5.0",

@@ -13,6 +13,7 @@ const KEY_VAL = `val`
 const DEFAULT_OPTIONS = {
   tag: `Datalog`,
   library: `datascript-mori`,
+  cache: false,
 }
 
 const PARSER = {
@@ -29,28 +30,30 @@ const mapping = {
   Map: `hashMap`,
 }
 
+const PARSE_FUNC = {
+  cached: {
+    namespace: `helpers`,
+    func: `memoized_parse`,
+  },
+  nonCached: {
+    namespace: `mori`,
+    func: `parse`,
+  },
+}
+
+const IMPORTED_LIBRARY = {
+  [MORI]: `*`,
+}
+
 const makeMessage = {
   ednError: ast => `Unexcepted AST of datascript query ${JSON.stringify(ast)}`,
-  optionError: () => `${PLUGIN_NAME} option library must be mori or datascript-mori`, // eslint-disable-line max-len
+  optLibraryError: () => `${PLUGIN_NAME} option library must be mori or datascript-mori`, // eslint-disable-line max-len
+  optCacheError: () => `${PLUGIN_NAME} option cache may be true if library=datascript-mori`, // eslint-disable-line max-len
 }
 
 const prepareArgs = {
   keyword: args => args.substring(1),
   set: (args, t) => t.arrayExpression([args]),
-}
-
-const libraryMakeImport = {
-  [MORI]: (uid, t) => t.importDeclaration(
-    [t.importNamespaceSpecifier(uid)],
-    t.stringLiteral(MORI)
-  ),
-  [DS_MORI]: (uid, t) => t.importDeclaration(
-    [t.importSpecifier(
-      uid,
-      t.identifier(MORI)
-    )],
-    t.stringLiteral(DS_MORI)
-  ),
 }
 
 const literalMaker = {
@@ -64,14 +67,14 @@ function getFirstKey(object) {
   return Object.keys(object)[0]
 }
 
-function makeCall(t, moriUID, name, args) {
+function makeCall(t, libraryNamespace, name, args) {
   const moriFunc = mapping[name]
   const mappedArgs = prepareArgs.hasOwnProperty(moriFunc) ?
     prepareArgs[moriFunc](args, t) :
     args
 
   return t.callExpression(
-    t.memberExpression(moriUID, t.identifier(moriFunc)),
+    t.memberExpression(libraryNamespace, t.identifier(moriFunc)),
     typeOf(mappedArgs) === ARRAY ?
       mappedArgs :
       [typeOf(mappedArgs) === STRING ?
@@ -80,7 +83,7 @@ function makeCall(t, moriUID, name, args) {
   )
 }
 
-function babelify(ast, t, moriUID) {
+function babelify(ast, t, libraryNamespace) {
   const typeNode = typeOf(ast)
   if (literalMaker.hasOwnProperty(typeNode)) {
     return literalMaker[typeNode](t, ast)
@@ -89,14 +92,14 @@ function babelify(ast, t, moriUID) {
     const val = ast[key]
     const typeVal = typeOf(val)
     if (typeVal === STRING) {
-      return makeCall(t, moriUID, key, val)
+      return makeCall(t, libraryNamespace, key, val)
     } else if (typeVal === ARRAY || typeVal === OBJECT) {
       const args = typeVal === OBJECT && getFirstKey(val) === KEY_VAL ?
         val[KEY_VAL] :
         val
 
-      return makeCall(t, moriUID, key,
-        args.map(item => babelify(item, t, moriUID))
+      return makeCall(t, libraryNamespace, key,
+        args.map(item => babelify(item, t, libraryNamespace))
       )
     }
   }
@@ -110,32 +113,30 @@ function checkQuery(query, type) {
   }
 }
 
-const statementVisitor = {
-  Statement(path) {
-    path.insertBefore(
-      libraryMakeImport[this.library](this.moriUID, this.types)
-    )
-    path.stop()
-  },
-}
-
 const visitorTagLiteral = {
   TaggedTemplateExpression(path) {
     const t = this.types
     const rawTag = path.get(`tag`)
+    const {hub: {file}} = path
     const [tag, type] = rawTag.isMemberExpression() ?
       [rawTag.get(`object`), rawTag.get(`property`).node.name] :
       [rawTag]
 
     if (tag.isIdentifier({name: this.tag})) {
-      if (!this.moriUID) {
-        this.moriUID = this.program.scope.generateUidIdentifier(`mori`)
-        this.program.traverse(statementVisitor, this)
+      if (!this.libraryNamespace) {
+        this.libraryNamespace = file.addImport(
+          this.library.path,
+          this.library.imported || this.library.namespace,
+          this.library.namespace
+        )
       }
       if (path.node.quasi.quasis.length !== 1) {
         path.replaceWith(
           t.callExpression(
-            t.memberExpression(this.moriUID, t.identifier(`parse`)),
+            t.memberExpression(
+              this.libraryNamespace,
+              t.identifier(this.library.func)
+            ),
             [path.node.quasi]
           )
         )
@@ -146,7 +147,7 @@ const visitorTagLiteral = {
         try {
           checkQuery(value, type)
           const parsed = JSON.parse(encodeJson(parse(value)))
-          ast = babelify(parsed, t, this.moriUID)
+          ast = babelify(parsed, t, this.libraryNamespace)
         } catch (e) {
           throw path.buildCodeFrameError(e)
         }
@@ -161,15 +162,23 @@ export default function({types}) {
   return {
     visitor: {
       Program(path, state) {
-        const {tag, library} = {...DEFAULT_OPTIONS, ...state.opts}
+        const {tag, library, cache} = {...DEFAULT_OPTIONS, ...state.opts}
         if (library !== MORI && library !== DS_MORI) {
-          throw new Error(makeMessage.optionError())
+          throw new Error(makeMessage.optLibraryError())
+        }
+        if (cache && library !== DS_MORI) {
+          throw new Error(makeMessage.optCacheError())
         }
         const innerState = {
           types,
           tag,
-          library,
-          program: path,
+          library: {
+            path: library,
+            ...(cache ? PARSE_FUNC.cached : PARSE_FUNC.nonCached),
+            ...(IMPORTED_LIBRARY[library] ?
+              {imported: IMPORTED_LIBRARY[library]} :
+              {}),
+          },
         }
 
         path.traverse(visitorTagLiteral, innerState)
